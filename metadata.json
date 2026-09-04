@@ -1,0 +1,8 @@
+{
+  "name": "Maritime SIH2026",
+  "description": "Forensic maritime oil spill source attribution platform with Lagrangian backtrack drift modeling, standard leeway windage physics, candidate AIS harvesting, and INCOIS/MOSDAC operational readiness.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

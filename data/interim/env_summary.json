@@ -1,0 +1,79 @@
+{
+  "window_utc": [
+    "2019-05-07 23:20:00",
+    "2019-05-13 23:20:00"
+  ],
+  "wind_station": {
+    "id": "8771013",
+    "name": "Eagle Point, Galveston Bay, TX (NOAA CO-OPS)",
+    "lat": 29.4813,
+    "lon": -94.9173
+  },
+  "current_station": {
+    "id": "g08010",
+    "name": "Fred Hartman Bridge, Houston Ship Channel, TX (NOAA CO-OPS PORTS)",
+    "lat": 29.7035,
+    "lon": -95.0189,
+    "bin": 30,
+    "bin_depth_m": 7.6
+  },
+  "wind": {
+    "source": "NOAA CO-OPS observed wind",
+    "n_samples": 1438,
+    "time_first_utc": "2019-05-07 23:24:00",
+    "time_last_utc": "2019-05-13 23:18:00",
+    "mean_scalar_speed_ms": 5.789,
+    "max_scalar_speed_ms": 15.2,
+    "vector_mean_speed_ms": 3.407,
+    "vector_mean_toward_deg": 295.2
+  },
+  "current": {
+    "source": "NOAA CO-OPS observed current",
+    "n_samples": 1387,
+    "time_first_utc": "2019-05-07 23:25:00",
+    "time_last_utc": "2019-05-13 23:19:00",
+    "mean_scalar_speed_ms": 0.405,
+    "max_scalar_speed_ms": 1.572,
+    "vector_mean_speed_ms": 0.357,
+    "vector_mean_toward_deg": 132.1
+  },
+  "wind_drift_factor": 0.03,
+  "combined_drift_before_observation": {
+    "1h": {
+      "speed_ms": 0.2599,
+      "toward_deg": 159.4,
+      "displacement_km": 0.936,
+      "n_current_samples": 10,
+      "n_wind_samples": 10
+    },
+    "2h": {
+      "speed_ms": 0.2106,
+      "toward_deg": 161.7,
+      "displacement_km": 1.516,
+      "n_current_samples": 19,
+      "n_wind_samples": 20
+    },
+    "3h": {
+      "speed_ms": 0.2009,
+      "toward_deg": 166.5,
+      "displacement_km": 2.169,
+      "n_current_samples": 26,
+      "n_wind_samples": 30
+    },
+    "6h": {
+      "speed_ms": 0.1939,
+      "toward_deg": 173.4,
+      "displacement_km": 4.188,
+      "n_current_samples": 54,
+      "n_wind_samples": 60
+    },
+    "12h": {
+      "speed_ms": 0.4255,
+      "toward_deg": 144.3,
+      "displacement_km": 18.384,
+      "n_current_samples": 114,
+      "n_wind_samples": 120
+    }
+  },
+  "limitation": "Single-point wind and single-point, mid-depth current, applied as spatially uniform fields. No coastline, no bathymetry, no spatial shear."
+}
