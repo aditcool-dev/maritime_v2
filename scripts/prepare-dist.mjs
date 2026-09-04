@@ -46,6 +46,14 @@ if (fs.existsSync(nextDir)) {
   if (fs.existsSync(appNotFoundHtml)) {
     fs.copyFileSync(appNotFoundHtml, path.join(distDir, '404.html'));
   }
+
+  // Copy standalone server if output: standalone is used
+  const standaloneDir = path.join(nextDir, 'standalone');
+  if (fs.existsSync(standaloneDir)) {
+    const distStandalone = path.join(distDir, 'standalone');
+    fs.cpSync(standaloneDir, distStandalone, { recursive: true });
+    console.log('[build:prepare-dist] Copied .next/standalone to dist/standalone');
+  }
 }
 
 // 3. Write a build metadata manifest inside dist

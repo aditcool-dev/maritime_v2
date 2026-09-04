@@ -3,11 +3,11 @@ import 'leaflet/dist/leaflet.css';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Maritime SIH2026 | Spill Source Attribution Console',
+  title: 'Maritime SIH2026',
   description:
     'Forensic maritime oil spill source attribution platform with Lagrangian backtrack drift modeling, standard leeway windage physics, candidate AIS harvesting, and INCOIS/MOSDAC operational readiness.',
   openGraph: {
-    title: 'Maritime SIH2026 | Spill Source Attribution Console',
+    title: 'Maritime SIH2026',
     description:
       'Forensic maritime oil spill source attribution platform with Lagrangian backtrack drift modeling, standard leeway windage physics, candidate AIS harvesting, and INCOIS/MOSDAC operational readiness.',
     type: 'website',
