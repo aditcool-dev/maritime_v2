@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev -p 3000 -H 0.0.0.0",
-    "build": "NODE_ENV=production next build && node scripts/prepare-dist.mjs",
+    "build": "next build && node scripts/prepare-dist.mjs",
     "start": "node server.ts",
     "lint": "next lint"
   },

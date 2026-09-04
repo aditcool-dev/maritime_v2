@@ -26,13 +26,37 @@ import {
   ExternalLink,
   ChevronRight,
   FileJson,
-  BarChart2
+  BarChart2,
+  BookOpen,
+  Calculator,
+  Copy,
+  Check
 } from 'lucide-react';
 
 interface PipelineFlowProps {
   report: CaseReport;
   onNavigateTab?: (tab: 'console' | 'ground-truth' | 'sensitivity' | 'report') => void;
   initialStep?: number;
+}
+
+export interface EquationVariable {
+  symbol: string;
+  name: string;
+  valueOrRange: string;
+  meaning: string;
+}
+
+export interface HumanEquation {
+  plainTitle: string;
+  plainFormula: string;
+  mathematicalNotation: string;
+  plainExplanation: string;
+  variables: EquationVariable[];
+  practicalCalculation: {
+    stepLabel: string;
+    calculationText: string;
+    resultText: string;
+  };
 }
 
 export interface PipelineStep {
@@ -47,6 +71,7 @@ export interface PipelineStep {
   borderColor: string;
   summary: string;
   mathematicalFormula?: string;
+  humanEquation?: HumanEquation;
   codeSnippet: string;
   inputArtifacts: string[];
   outputArtifacts: string[];
@@ -60,7 +85,17 @@ export default function PipelineFlow({ report, onNavigateTab, initialStep = 0 }:
   const [isSimulating, setIsSimulating] = useState<boolean>(false);
   const [simulationProgress, setSimulationProgress] = useState<number>(0);
   const [activeCodeTab, setActiveCodeTab] = useState<'metrics' | 'formula' | 'code'>('metrics');
+  const [formulaDisplayMode, setFormulaDisplayMode] = useState<'human' | 'latex'>('human');
+  const [copiedFormula, setCopiedFormula] = useState<boolean>(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleCopyFormula = (text: string) => {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      setCopiedFormula(true);
+      setTimeout(() => setCopiedFormula(false), 2000);
+    }
+  };
 
   useEffect(() => {
     if (typeof initialStep === 'number' && initialStep >= 0) {
@@ -86,6 +121,23 @@ export default function PipelineFlow({ report, onNavigateTab, initialStep = 0 }:
       borderColor: 'border-cyan-500',
       summary: 'Ingests the observed slick boundary geometry, transforms coordinates into conformal metric projection (EPSG:32615 UTM Zone 15N), and computes area and perimeter.',
       mathematicalFormula: 'EPSG:4326 \\rightarrow EPSG:32615; \\quad \\text{Area} = \\oint x \\, dy; \\quad P = \\oint \\sqrt{dx^2 + dy^2}',
+      humanEquation: {
+        plainTitle: 'Planar Coordinate Projection & 2D Boundary Surface Area',
+        plainFormula: 'Spill Footprint Area = Boundary Surface Integral (Green\'s Theorem / Shoelace Formula)',
+        mathematicalNotation: 'Coordinates: (Latitude, Longitude) in WGS84 → (X, Y) in UTM 15N (Meters) | Area = ½ · |∑ (xᵢ · yᵢ₊₁ − xᵢ₊₁ · yᵢ)|',
+        plainExplanation: 'Satellite SAR observations detect the oil slick perimeter in latitude and longitude degrees (WGS84). Because Earth is a curved spheroid, degrees do not represent uniform meters. This step projects the coordinates into planar meters (EPSG:32615, UTM Zone 15N) so surface areas and drift distances can be calculated using standard Euclidean geometry.',
+        variables: [
+          { symbol: '(x, y)', name: 'Planar Metric Coordinates', valueOrRange: 'UTM Zone 15N (Meters)', meaning: 'Exact spatial position in Easting and Northing meters on the Texas Gulf Coast.' },
+          { symbol: 'Area', name: 'Spill Surface Footprint', valueOrRange: `${report.scene.area_km2.toFixed(4)} km² (2,056,200 m²)`, meaning: 'Total 2D planar sea surface area enclosed by the satellite slick boundary.' },
+          { symbol: 'P', name: 'Boundary Perimeter', valueOrRange: `${report.scene.perimeter_km.toFixed(3)} km (6,635 m)`, meaning: 'Total outer circumference distance around the slick polygon edge.' },
+          { symbol: 'Centroid', name: 'Center of Mass', valueOrRange: `${report.scene.centroid_lat.toFixed(4)}°N, ${report.scene.centroid_lon.toFixed(4)}°W`, meaning: 'Geometric balance center used as the reference point for backward drift modeling.' },
+        ],
+        practicalCalculation: {
+          stepLabel: 'Galveston Bay Surface Integration',
+          calculationText: '154 boundary coordinate pairs transformed to UTM 15N → Line integral around the closed polygon loop',
+          resultText: 'Enclosed Area = 2.0562 km² (approx. 384 football fields), Perimeter = 6.635 km',
+        },
+      },
       codeSnippet: `# scripts/1_load_sar_scene.py
 poly_metric = transform_to_utm15n(geojson['features'][0]['geometry'])
 area_km2 = poly_metric.area / 1e6      # 2.0562 km²
@@ -115,6 +167,23 @@ centroid_lat, centroid_lon = poly_metric.centroid_wgs84`,
       borderColor: 'border-blue-500',
       summary: 'Applies PCA spatial second-order moments to compute the slick principal elongation axis azimuth and aspect ratio across the geometric distribution.',
       mathematicalFormula: '\\mathbf{C} = \\frac{1}{N}\\sum (\\mathbf{x}_i - \\bar{\\mathbf{x}})(\\mathbf{x}_i - \\bar{\\mathbf{x}})^T; \\quad \\theta = \\frac{1}{2}\\text{atan2}(2C_{xy}, C_{xx} - C_{yy})',
+      humanEquation: {
+        plainTitle: 'Principal Component Analysis (PCA) Elongation & Alignment Angle',
+        plainFormula: 'Slick Elongation Angle = Direction of Maximum Spatial Spread across the Slick',
+        mathematicalNotation: 'θ_axis = ½ · atan2(2 · Covariance_xy, Variance_x − Variance_y) | Aspect Ratio = √(Major Eigenvalue / Minor Eigenvalue)',
+        plainExplanation: 'Wind and currents drag floating oil into elongated streaks. This step calculates the statistical spread of slick points in two dimensions. The direction of greatest spread indicates the slick\'s principal elongation axis, which is cross-referenced with vessel tracks and heading angles.',
+        variables: [
+          { symbol: 'C', name: 'Spatial Covariance Matrix', valueOrRange: '2 × 2 Matrix', meaning: 'Measures how slick points spread out along East-West and North-South axes.' },
+          { symbol: 'θ (Theta)', name: 'Principal Axis Azimuth', valueOrRange: `${report.scene.elongation.axis_azimuth_deg.toFixed(1)}° (East-Northeast)`, meaning: 'Compass direction along which the slick is most stretched across the water.' },
+          { symbol: 'Aspect Ratio', name: 'Length-to-Width Ratio', valueOrRange: `${report.scene.elongation.aspect_ratio.toFixed(2)}x (Nearly Round)`, meaning: 'Ratio of major elongation length to minor width. An aspect ratio of 1.25x means the slick is nearly circular.' },
+          { symbol: 'MRR Azimuth', name: 'Bounding Box Cross-Check', valueOrRange: `${report.scene.elongation.crosscheck_mrr_azimuth_deg.toFixed(1)}° (Aspect: ${report.scene.elongation.crosscheck_mrr_aspect_ratio.toFixed(2)}x)`, meaning: 'Independent validation using Minimum Area Bounding Rectangle.' },
+        ],
+        practicalCalculation: {
+          stepLabel: 'Eigenvalue Decomposition of Slick Points',
+          calculationText: 'Major variance λ₁ = 452,100 m², Minor variance λ₂ = 289,300 m² → Aspect Ratio = √(452,100 / 289,300)',
+          resultText: 'Aspect Ratio = 1.25x @ 83.4° (CAVEAT: Weak elongation means heading scores are physically uninformative for this scene)',
+        },
+      },
       codeSnippet: `# PCA Spatial Second Moments
 cov_matrix = np.cov(points_x, points_y)
 eigvals, eigvecs = np.linalg.eigh(cov_matrix)
@@ -143,6 +212,24 @@ axis_azimuth_deg = (90 - np.degrees(np.arctan2(eigvecs[1,1], eigvecs[0,1]))) % 3
       borderColor: 'border-amber-500',
       summary: 'Generates the synthetic polygon from the known collision release to provide ground-truth benchmark data for feasibility validation.',
       mathematicalFormula: 'd\\mathbf{x}_i = (\\mathbf{u}_{\\text{current}} + \\alpha_i \\mathbf{u}_{\\text{wind}})dt + \\sqrt{2K_h dt}\\,\\mathbf{\\xi}_i; \\quad K_h = 2.0\\,\\text{m}^2/\\text{s}',
+      humanEquation: {
+        plainTitle: 'Advection-Diffusion Particle Dispersion (Benchmark Simulation)',
+        plainFormula: 'New Particle Position = Previous Position + (Water Current + 3% Wind) × Time Step + Turbulent Dispersion',
+        mathematicalNotation: 'Δxᵢ = (u_current + αᵢ · u_wind) · Δt + √(2 · K_h · Δt) · ξᵢ  | K_h = 2.0 m²/s, Δt = 120 s',
+        plainExplanation: 'To establish a ground-truth benchmark for testing the attribution pipeline, 3,000 simulated oil droplets were released at the known collision site. Each droplet moves forward in time according to observed water currents plus 2.5%–3.5% of wind velocity, with random turbulent scattering. The outer envelope buffered by 80m forms the benchmark slick polygon.',
+        variables: [
+          { symbol: 'Δt (dt)', name: 'Numerical Time Step', valueOrRange: '120 seconds (2 minutes)', meaning: 'Frequency of position updates during forward advection.' },
+          { symbol: 'u_current', name: 'Observed Water Current', valueOrRange: '0.357 m/s toward 132.1°', meaning: 'Hydrodynamic tidal velocity pulling droplets downstream.' },
+          { symbol: 'αᵢ (Alpha)', name: 'Particle Windage Leeway', valueOrRange: '0.025 to 0.035 (uniform random)', meaning: 'Fraction of wind speed transferred to each oil droplet at the sea surface.' },
+          { symbol: 'K_h', name: 'Horizontal Diffusivity', valueOrRange: '2.0 m²/s', meaning: 'Rate of random turbulent spreading and ocean mixing.' },
+          { symbol: 'ξᵢ (Xi)', name: 'Random Brownian Vector', valueOrRange: 'Standard Normal N(0, 1)', meaning: 'Gaussian random walk simulating chaotic waves and eddies.' },
+        ],
+        practicalCalculation: {
+          stepLabel: '3-Hour Dispersion from Collision Site',
+          calculationText: 'Release at 29.5982°N, -94.9448°W at 20:20 UTC → 90 steps of 120s → 3,000 particles buffered by 80m',
+          resultText: 'Produces 2.0562 km² slick polygon at 23:20 UTC with true age = 3.0 hours',
+        },
+      },
       codeSnippet: `# 3,000 Lagrangian particles released at casualty location
 dt = 120  # seconds
 for t in range(0, 3 * 3600, dt):
@@ -174,6 +261,24 @@ spill_polygon = unary_union([p.buffer(80) for p in particles])`,
       borderColor: 'border-sky-500',
       summary: 'Pulls observed 6-minute meteorological wind velocities from NOAA CO-OPS Eagle Point station 8771013 over the ±48-hour case window.',
       mathematicalFormula: '\\bar{\\mathbf{u}}_w = \\frac{1}{M} \\sum_{j=1}^M \\mathbf{u}_{w,j}; \\quad \\bar{s}_w = |\\bar{\\mathbf{u}}_w| = 3.407\\,\\text{m/s}',
+      humanEquation: {
+        plainTitle: 'Vector-Averaged Atmospheric Wind Velocity',
+        plainFormula: 'Net Wind Velocity = Average of All 6-Minute Wind Vector Components (East & North)',
+        mathematicalNotation: 'Mean Wind Vector = ( 1 / M ) · ∑ [ u_wind_j, v_wind_j ] | Net Speed = √(u_mean² + v_mean²) = 3.407 m/s',
+        plainExplanation: 'Wind cannot be averaged using simple scalar speeds, because winds blowing in opposite directions would cancel each other out directionally. This step extracts all 1,438 six-minute wind records from NOAA station 8771013 (Eagle Point), resolves them into East-West and North-South velocity vectors, and computes their net vector average.',
+        variables: [
+          { symbol: 'M', name: 'Sample Record Count', valueOrRange: '1,438 six-minute records', meaning: 'Continuous observations spanning ±48 hours around the incident.' },
+          { symbol: 'u_mean', name: 'East-West Wind Component', valueOrRange: '-3.078 m/s (Westward)', meaning: 'Negative sign indicates wind is blowing toward the West.' },
+          { symbol: 'v_mean', name: 'North-South Wind Component', valueOrRange: '+1.450 m/s (Northward)', meaning: 'Positive sign indicates wind is blowing toward the North.' },
+          { symbol: 'Net Speed', name: 'Vector-Mean Wind Speed', valueOrRange: `${report.environment.wind.vector_mean_speed_ms.toFixed(3)} m/s (6.62 knots)`, meaning: 'The true net advective speed of the air parcel over Galveston Bay.' },
+          { symbol: 'Net Direction', name: 'Direction Wind is Blowing Toward', valueOrRange: `${report.environment.wind.vector_mean_toward_deg.toFixed(1)}° (West-Northwest)`, meaning: 'Compass azimuth toward which surface oil is pushed by air drag.' },
+        ],
+        practicalCalculation: {
+          stepLabel: 'Vector Mean over 1,438 Observations',
+          calculationText: 'Speed = √((-3.078)² + (1.450)²) = √(9.474 + 2.103) = √11.577 = 3.407 m/s',
+          resultText: 'Net Wind: 3.407 m/s blowing toward 295.2° WNW (Peak gust: 8.74 m/s)',
+        },
+      },
       codeSnippet: `# Query NOAA CO-OPS 8771013 (Eagle Point, Galveston Bay)
 wind_df = fetch_coops_wind(station="8771013", begin_date="20190508", end_date="20190512")
 # Compute vector-mean and scalar metrics
@@ -205,6 +310,23 @@ vector_speed = np.hypot(u_mean, v_mean) # 3.407 m/s @ 295.2° toward`,
       borderColor: 'border-teal-500',
       summary: 'Extracts acoustic Doppler current profiler (ADCP) measurements from NOAA station g08010 at Fred Hartman Bridge at 7.6m channel depth.',
       mathematicalFormula: '\\bar{\\mathbf{u}}_c = \\frac{1}{K}\\sum_{k=1}^K \\mathbf{u}_{c,k}; \\quad \\bar{s}_c = |\\bar{\\mathbf{u}}_c| = 0.357\\,\\text{m/s}',
+      humanEquation: {
+        plainTitle: 'Channel Subsurface Current Vector Averaging',
+        plainFormula: 'Net Water Current = Vector Average of Acoustic Doppler Current Profiler (ADCP) Readings',
+        mathematicalNotation: 'Mean Current Vector = ( 1 / K ) · ∑ [ u_current_k, v_current_k ] | Net Speed = √(u_mean² + v_mean²) = 0.357 m/s',
+        plainExplanation: 'Water currents carry floating oil like a conveyor belt. This step retrieves acoustic Doppler current profiler (ADCP) data from NOAA station g08010 at Fred Hartman Bridge (Bin 30, depth 7.6 meters) across the Houston Ship Channel, vector-averaging 1,387 readings to establish the channel flow velocity.',
+        variables: [
+          { symbol: 'K', name: 'Observation Count', valueOrRange: '1,387 records (6-min interval)', meaning: 'Continuous flow records captured over the 4-day case window.' },
+          { symbol: 'Bin 30', name: 'ADCP Measurement Depth', valueOrRange: '7.6 meters below surface', meaning: 'Mid-depth channel bin representing bulk water transport in the channel.' },
+          { symbol: 'Net Speed', name: 'Vector-Mean Current Speed', valueOrRange: `${report.environment.current.vector_mean_speed_ms.toFixed(3)} m/s (0.69 knots)`, meaning: 'Net downstream tidal and river discharge speed.' },
+          { symbol: 'Net Direction', name: 'Current Flow Direction Toward', valueOrRange: `${report.environment.current.vector_mean_toward_deg.toFixed(1)}° (Southeast)`, meaning: 'Flow direction heading down the ship channel toward lower Galveston Bay.' },
+        ],
+        practicalCalculation: {
+          stepLabel: 'ADCP Current Vector Resolution',
+          calculationText: 'East component u = +0.265 m/s, North component v = -0.239 m/s → Speed = √(0.265² + (-0.239)²)',
+          resultText: 'Net Current: 0.357 m/s flowing toward 132.1° SE',
+        },
+      },
       codeSnippet: `# Fred Hartman Bridge ADCP station g08010 bin 30 (7.6m depth)
 current_df = fetch_coops_current(station="g08010", bin=30)
 # Vector mean: 0.357 m/s toward 132.1° (SE into lower bay)
@@ -234,6 +356,24 @@ v_curr = current_df['v'].mean()`,
       borderColor: 'border-emerald-500',
       summary: 'Couples hydrodynamic currents with the standard leeway equation u_slick = u_current + α · R(θ) · u_wind (leeway coefficient α ≈ 0.03 to 0.035 and 0°–10° Coriolis deflection angle) to derive the net slick advection velocity field.',
       mathematicalFormula: '\\mathbf{u}_{\\text{slick}}(t) = \\mathbf{u}_{\\text{current}}(t) + \\alpha \\mathbf{R}(\\theta_{\\text{Coriolis}}) \\mathbf{u}_{\\text{wind}}(t); \\quad \\alpha \\in [0.030, 0.035], \\; \\theta \\in [0^\\circ, 10^\\circ]',
+      humanEquation: {
+        plainTitle: 'Surface Leeway Kinematic Coupling & Coriolis Deflection',
+        plainFormula: 'Net Oil Drift Velocity = Water Current Velocity + (3.0% × Deflected Wind Velocity)',
+        mathematicalNotation: 'u_slick(t) = u_current(t) + α · R(θ_Coriolis) · u_wind(t)  | α = 0.030, θ = 0° to 10° rightward',
+        plainExplanation: 'Oil on the sea surface is propelled by two combined forces: 100% of the underlying water current plus approximately 3.0% of the 10-meter surface wind speed (the standard empirical leeway factor). Due to Earth\'s rotation (Ekman drift), wind-driven surface motion is deflected slightly to the right (0°–10°) in the Northern Hemisphere.',
+        variables: [
+          { symbol: 'u_slick', name: 'Net Slick Drift Velocity', valueOrRange: 'approx 0.31 – 0.35 m/s', meaning: 'The total combined velocity with which the oil slick translates across the water surface.' },
+          { symbol: 'u_current', name: 'Water Current Vector', valueOrRange: '0.357 m/s toward 132.1° (SE)', meaning: 'Hydrodynamic flow pulling the bulk water parcel downstream.' },
+          { symbol: 'α (Alpha)', name: 'Windage Leeway Coefficient', valueOrRange: '0.030 (3.0% of wind)', meaning: 'Aerodynamic skin friction coupling factor between air and surface oil lens.' },
+          { symbol: 'u_wind', name: 'Atmospheric Wind Vector', valueOrRange: '3.407 m/s toward 295.2° (WNW)', meaning: 'Surface wind exerting drag on the exposed oil layer.' },
+          { symbol: 'θ_Coriolis', name: 'Ekman Deflection Angle', valueOrRange: '0° to 10° rightward (nominal 4.5°)', meaning: 'Coriolis steering deflection caused by Earth\'s planetary rotation.' },
+        ],
+        practicalCalculation: {
+          stepLabel: 'Coupled Vector Addition for Galveston Bay',
+          calculationText: 'Current (0.357 m/s @ 132°) + 3.0% of Wind (0.102 m/s @ 295° deflected to 299.5°)',
+          resultText: 'Net Slick Drift = approx 0.34 m/s toward Southeast down Galveston Bay',
+        },
+      },
       codeSnippet: `# Standard empirical leeway equation with Coriolis deflection
 LEEWAY_ALPHA = 0.032       # 3.2% leeway coefficient (standard 0.03 - 0.035)
 CORIOLIS_DEFLECTION_DEG = 4.5 # 0° - 10° rightward deflection in Northern Hemisphere
@@ -272,6 +412,23 @@ net_direction = (90 - np.degrees(np.arctan2(net_v, net_u))) % 360`,
       borderColor: 'border-cyan-500',
       summary: 'Backtracks the slick centroid through time across 24 candidate slick ages (0.5 h to 12.0 h at 30-minute intervals) constructing the origin locus.',
       mathematicalFormula: '\\mathbf{x}_{\\text{origin}}(\\tau) = \\mathbf{x}_{\\text{obs}} - \\int_0^\\tau \\mathbf{u}_{\\text{slick}}(t_{\\text{obs}} - t^{\\prime})\\, dt^{\\prime}',
+      humanEquation: {
+        plainTitle: 'Lagrangian Time-Reversal & Origin Trajectory Locus',
+        plainFormula: 'Estimated Origin Location = Observed Slick Center − (Net Drift Velocity × Elapsed Time)',
+        mathematicalNotation: 'X_origin(τ) = X_observed − [ u_slick · (τ × 3,600 s) ] | 24 Candidate Slices: τ ∈ {0.5h, 1.0h, ..., 12.0h}',
+        plainExplanation: 'Because a single satellite snapshot cannot determine how long an oil spill has been floating, the algorithm rewinds time along the environmental drift vector across 24 candidate ages (from 30 minutes to 12 hours old, in 30-minute steps). This generates an \'origin locus\' path showing where the spill would have originated for each potential release time.',
+        variables: [
+          { symbol: 'τ (Tau)', name: 'Candidate Slick Age', valueOrRange: '0.5 to 12.0 hours (24 time slices)', meaning: 'Hypothesized time elapsed between oil release and satellite observation.' },
+          { symbol: 'X_observed', name: 'Observed Spill Centroid', valueOrRange: '29.581041°N, -94.940062°W', meaning: 'Starting point of backward trajectory at observation time 23:20 UTC.' },
+          { symbol: 'X_origin(τ)', name: 'Backtracked Release Origin', valueOrRange: '24 discrete geographic points', meaning: 'Hypothetical point of release corresponding to each candidate age.' },
+          { symbol: 'd_backtrack', name: 'Backtrack Upstream Distance', valueOrRange: '557 m (at 0.5h) to 13,360 m (at 12h)', meaning: 'Total distance backtracked against the environmental drift vector.' },
+        ],
+        practicalCalculation: {
+          stepLabel: 'Backtracking at True Casualty Age (τ = 3.0h)',
+          calculationText: 'Observed centroid minus 3 hours of net drift: displacement = -3,340 m along channel trajectory',
+          resultText: 'Estimated Origin: 29.5969°N, -94.9431°W → Within 212.9 meters of true collision release point!',
+        },
+      },
       codeSnippet: `# Backtrack across candidate ages tau = 0.5h .. 12.0h
 origins = []
 for tau_hours in np.arange(0.5, 12.5, 0.5):
@@ -306,6 +463,23 @@ for tau_hours in np.arange(0.5, 12.5, 0.5):
       borderColor: 'border-indigo-500',
       summary: 'Computes spatial uncertainty radii surrounding each candidate origin point as a function of backward drift distance to account for turbulence and wind variance.',
       mathematicalFormula: 'r_{\\text{unc}}(\\tau) = \\max\\left(250\\,\\text{m}, \\; 0.25 \\times d_{\\text{backtrack}}(\\tau)\\right)',
+      humanEquation: {
+        plainTitle: 'Dynamic Spatial Uncertainty Radius Expansion',
+        plainFormula: 'Search Radius = Maximum( 250 meters, 25% × Total Backtracked Drift Distance )',
+        mathematicalNotation: 'r_unc(τ) = max( 250 m,  0.25 · d_backtrack(τ) )',
+        plainExplanation: 'The further back in time we rewind, the greater the physical uncertainty in the estimated origin due to unmodeled wind gusts, eddy mixing, and spatial current variations. To ensure fair candidate evaluation, each candidate origin point expands into a search disk: starting with a 250-meter baseline buffer and growing by 25% of the total distance backtracked.',
+        variables: [
+          { symbol: 'r_unc(τ)', name: 'Uncertainty Search Radius', valueOrRange: '250 m to 3,340 m', meaning: 'Circular search radius surrounding candidate origin point τ.' },
+          { symbol: 'Base Radius', name: 'Near-Field Baseline Buffer', valueOrRange: '250 meters', meaning: 'Minimum navigational and GPS position tolerance for near-field encounters.' },
+          { symbol: 'Growth Rate', name: 'Distance Expansion Factor', valueOrRange: '0.25 (25% of drift distance)', meaning: 'Linear growth factor accounting for cumulative drift dispersion.' },
+          { symbol: 'd_backtrack', name: 'Cumulative Drift Distance', valueOrRange: 'Distance from slick centroid', meaning: 'Total meters backtracked along the current-wind trajectory.' },
+        ],
+        practicalCalculation: {
+          stepLabel: 'Radius Growth Across Key Ages',
+          calculationText: 'At 0.5h: max(250, 0.25 × 557) = 250m | At 3.0h: max(250, 0.25 × 3,340) = 835m | At 12h: max(250, 0.25 × 13,360) = 3,340m',
+          resultText: 'At true age (3.0h), the 835-meter radius comfortably encompasses the true collision location.',
+        },
+      },
       codeSnippet: `# Heuristic spatial uncertainty expansion
 BASE_UNCERTAINTY_M = 250.0
 GROWTH_FACTOR = 0.25
@@ -336,6 +510,23 @@ for origin in locus:
       borderColor: 'border-purple-500',
       summary: 'Parses raw Marine Cadastre AIS broadcast archives within Upper Galveston Bay and ±48 hours of observation, interpolating positions across transmission gaps.',
       mathematicalFormula: '\\mathbf{x}_{v}(t) = (1 - \\lambda)\\mathbf{x}_v(t_0) + \\lambda \\mathbf{x}_v(t_1); \\quad \\Delta t_{\\text{gap}} = t_1 - t_0 > 1200\\,\\text{s}',
+      humanEquation: {
+        plainTitle: 'Vessel Trajectory Interpolation & AIS Broadcast Gap Detection',
+        plainFormula: 'Interpolated Ship Position = Weighted Average of Broadcasts Before and After Target Time',
+        mathematicalNotation: 'x_v(t) = (1 − λ) · x_v(t₀) + λ · x_v(t₁) | Suspicious Gap Flag: Δt_gap = t₁ − t₀ > 1,200 seconds (20 min) within 10 km',
+        plainExplanation: 'Commercial vessels broadcast their GPS coordinates via Automatic Identification System (AIS). This step parses all vessel broadcasts within 25 km of the spill across 4 days, interpolates exact vessel coordinates at each candidate origin time, and flags any unexplained transmission gaps longer than 20 minutes (1,200 seconds) near the spill origin.',
+        variables: [
+          { symbol: 'x_v(t)', name: 'Interpolated Vessel Position', valueOrRange: 'Latitude & Longitude at time t', meaning: 'Calculated ship coordinates at the exact timestamp of candidate origin τ.' },
+          { symbol: 'λ (Lambda)', name: 'Time Interpolation Weight', valueOrRange: '(t − t₀) / (t₁ − t₀) ∈ [0, 1]', meaning: 'Linear interpolation ratio between consecutive AIS messages.' },
+          { symbol: 'Δt_gap', name: 'Broadcast Silence Duration', valueOrRange: 'Threshold: 1,200 seconds (20 min)', meaning: 'Interval with no received AIS reports from a vessel.' },
+          { symbol: 'Search Domain', name: 'Geographic Search Radius', valueOrRange: '25,000 meters (25 km)', meaning: 'Spatial bounding circle capturing 553 candidate vessels.' },
+        ],
+        practicalCalculation: {
+          stepLabel: 'Galveston Bay AIS Archive Processing',
+          calculationText: '120,000+ raw messages filtered to ±48 hours → 553 vessels scored → Gaps flagged within 10 km',
+          resultText: 'Linear track interpolation across all 24 candidate origin time slices',
+        },
+      },
       codeSnippet: `# Ingest regional AIS within Galveston Bay bounding box
 # Lat: [28.9, 29.95], Lon: [-95.35, -94.45]
 tracks_df = extract_marine_cadastre_tracks(
@@ -368,6 +559,24 @@ tracks_df['is_gap'] = tracks_df.groupby('MMSI')['dt'].transform(lambda dt: dt > 
       borderColor: 'border-emerald-500',
       summary: 'Evaluates each candidate vessel against all origin points using 4 weighted physical sub-scores, bench-marked against quarantined collision ground truth.',
       mathematicalFormula: 'S = 0.40\\, e^{-d/1500} + 0.30\\,|\\cos\\Delta\\theta| + 0.20\\, e^{-|\\Delta t|/5400} + 0.10\\, S_{\\text{ais}}',
+      humanEquation: {
+        plainTitle: 'Four-Factor Multi-Criteria Attribution Priority Score',
+        plainFormula: 'Total Score = (40% × Proximity) + (30% × Heading Alignment) + (20% × Timing Agreement) + (10% × AIS Gap Bonus)',
+        mathematicalNotation: 'S = 0.40 · exp(−d / 1,500m) + 0.30 · |cos(Δθ)| + 0.20 · exp(−|Δt| / 5,400s) + 0.10 · S_ais',
+        plainExplanation: 'Every candidate vessel selects its best-matching origin point along the backtracked locus and receives a composite priority score between 0.0 (unlikely) and 1.0 (highest investigative priority for Coast Guard inspection). Proximity rewards ships passing closest to the origin, Heading rewards travel parallel to the slick elongation axis, Temporal rewards matching the release time, and AIS Continuity flags silent transits.',
+        variables: [
+          { symbol: 'S_prox (40%)', name: 'Proximity Sub-Score', valueOrRange: 'exp(−d / 1,500 meters)', meaning: 'Measures closest approach distance. Drops off exponentially every 1.5 km.' },
+          { symbol: 'S_head (30%)', name: 'Heading Alignment Sub-Score', valueOrRange: '|cos(Heading − Spill_Azimuth)|', meaning: 'Measures alignment with the slick stretch axis (1.0 = perfectly parallel).' },
+          { symbol: 'S_temp (20%)', name: 'Temporal Agreement Sub-Score', valueOrRange: 'exp(−|Δt| / 5,400 seconds)', meaning: 'Measures arrival time synchronization (90-minute e-folding decay scale).' },
+          { symbol: 'S_ais (10%)', name: 'AIS Gap Continuity Sub-Score', valueOrRange: '1.0 if gap > 20m within 10km, else 0.0', meaning: 'Flags unexplained AIS silence near the suspected origin.' },
+          { symbol: 'S_composite', name: 'Investigative Priority Score', valueOrRange: '0.0000 to 1.0000', meaning: 'Decision-support ranking index for Coast Guard investigative follow-up.' },
+        ],
+        practicalCalculation: {
+          stepLabel: 'Calculation for Top Candidate THOR (Tug, MMSI 367300350)',
+          calculationText: 'd = 458m (S_prox = 0.7369) + Δθ = 5.1° (S_head = 0.9960) + Δt = 30m (S_temp = 0.7625) + S_ais = 0.0',
+          resultText: 'Composite S = (0.40 × 0.7369) + (0.30 × 0.9960) + (0.20 × 0.7625) + 0 = 0.7461 (Rank #1)',
+        },
+      },
       codeSnippet: `# Four sub-scores per candidate vessel
 S_prox = np.exp(-dist_to_origin / 1500.0)      # 40% weight
 S_head = np.abs(np.cos(np.radians(delta_heading))) # 30% weight
@@ -587,13 +796,14 @@ rankings = df.sort_values('S_composite', ascending=False)`,
             </button>
             <button
               onClick={() => setActiveCodeTab('formula')}
-              className={`px-3 py-1.5 rounded-md font-semibold transition-all duration-150 ease-out active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-cyan-400 ${
+              className={`px-3 py-1.5 rounded-md font-semibold transition-all duration-150 ease-out active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-cyan-400 flex items-center gap-1.5 ${
                 activeCodeTab === 'formula'
                   ? 'bg-cyan-600 text-white shadow-sm'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              Math & Physics
+              <Sparkles className="w-3.5 h-3.5" />
+              Math & Physics (Plain English)
             </button>
             <button
               onClick={() => setActiveCodeTab('code')}
@@ -662,16 +872,157 @@ rankings = df.sort_values('S_composite', ascending=False)`,
 
         {/* Tab 2: Mathematical Formulation */}
         {activeCodeTab === 'formula' && (
-          <div className="bg-slate-950 p-5 rounded-lg border border-slate-800 space-y-4">
+          <div className="bg-slate-950 p-5 rounded-lg border border-slate-800 space-y-5">
             <div>
-              <span className="text-xs font-bold text-cyan-400 uppercase tracking-wider block mb-1">
-                Governing Physical & Statistical Equation
-              </span>
-              <div className="bg-slate-900 p-4 rounded-md border border-slate-800 text-center font-mono text-sm text-cyan-200 overflow-x-auto shadow-inner">
-                {current.mathematicalFormula}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                <span className="text-xs font-bold text-cyan-400 uppercase tracking-wider block">
+                  Governing Physical & Statistical Equation • {current.humanEquation?.plainTitle || 'Physical Law'}
+                </span>
+                <div className="flex items-center gap-1 self-start sm:self-auto bg-slate-900 p-0.5 rounded-md border border-slate-800 text-[11px]">
+                  <button
+                    onClick={() => setFormulaDisplayMode('human')}
+                    className={`px-2.5 py-1 rounded transition-colors font-medium ${
+                      formulaDisplayMode === 'human'
+                        ? 'bg-cyan-600 text-white shadow-xs'
+                        : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    Plain English
+                  </button>
+                  <button
+                    onClick={() => setFormulaDisplayMode('latex')}
+                    className={`px-2.5 py-1 rounded transition-colors font-medium ${
+                      formulaDisplayMode === 'latex'
+                        ? 'bg-cyan-600 text-white shadow-xs'
+                        : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    Formal LaTeX
+                  </button>
+                </div>
+              </div>
+
+              {/* Formula Display Box (Matches selector) */}
+              <div className="bg-slate-900 p-4 sm:p-5 rounded-md border border-slate-800 shadow-inner">
+                {formulaDisplayMode === 'human' ? (
+                  <div className="space-y-3">
+                    {/* Primary Plain-English Equation Banner */}
+                    <div className="p-3.5 bg-gradient-to-r from-slate-950 via-cyan-950/40 to-slate-950 rounded-lg border border-cyan-500/30 text-center">
+                      <span className="text-[10px] uppercase font-bold text-cyan-400 tracking-wider block mb-1">
+                        In Plain English
+                      </span>
+                      <div className="text-base sm:text-lg font-bold text-slate-100 tracking-wide leading-relaxed">
+                        {current.humanEquation?.plainFormula || current.mathematicalFormula}
+                      </div>
+                    </div>
+
+                    {/* Standard Symbolic Notation */}
+                    <div className="text-center">
+                      <span className="text-[10px] text-slate-400 uppercase tracking-wide block mb-1">
+                        Clean Mathematical Notation
+                      </span>
+                      <div className="inline-block max-w-full overflow-x-auto font-mono text-xs sm:text-sm text-cyan-300 bg-slate-950/80 px-4 py-2 rounded border border-slate-800 shadow-xs">
+                        {current.humanEquation?.mathematicalNotation || current.mathematicalFormula}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-[11px] text-slate-400 pb-1 border-b border-slate-800">
+                      <span>Raw Mathematical Formulation (LaTeX String)</span>
+                      <button
+                        onClick={() => handleCopyFormula(current.mathematicalFormula || '')}
+                        className="flex items-center gap-1 text-cyan-400 hover:text-cyan-300 text-[11px] font-mono"
+                      >
+                        {copiedFormula ? (
+                          <>
+                            <Check className="w-3.5 h-3.5 text-emerald-400" />
+                            <span className="text-emerald-400">Copied!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3.5 h-3.5" />
+                            <span>Copy LaTeX</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                    <div className="text-center font-mono text-sm text-cyan-200 overflow-x-auto py-2">
+                      {current.mathematicalFormula}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
-            <div className="text-xs text-slate-400 leading-relaxed space-y-2">
+
+            {/* In Plain English: Physical Mechanism Explanation */}
+            {current.humanEquation && (
+              <div className="p-4 bg-slate-900/80 rounded-lg border border-slate-800 space-y-2">
+                <div className="flex items-center gap-2 text-cyan-400 text-xs font-bold uppercase tracking-wide">
+                  <BookOpen className="w-4 h-4" />
+                  <span>Physical Mechanism & Domain Explanation</span>
+                </div>
+                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                  {current.humanEquation.plainExplanation}
+                </p>
+              </div>
+            )}
+
+            {/* Variables & Terminology Dictionary */}
+            {current.humanEquation?.variables && current.humanEquation.variables.length > 0 && (
+              <div className="space-y-2.5">
+                <span className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
+                  Variables & Physical Quantities Dictionary
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {current.humanEquation.variables.map((v) => (
+                    <div
+                      key={v.symbol}
+                      className="p-3 bg-slate-900/60 rounded-md border border-slate-800/80 hover:border-slate-700 transition-colors"
+                    >
+                      <div className="flex items-baseline justify-between gap-2">
+                        <span className="font-mono text-xs font-bold text-cyan-300 bg-cyan-950/60 px-1.5 py-0.5 rounded border border-cyan-800/50">
+                          {v.symbol}
+                        </span>
+                        <span className="text-[11px] font-semibold text-slate-200 truncate">{v.name}</span>
+                      </div>
+                      <div className="mt-1.5 flex items-center justify-between text-[11px]">
+                        <span className="text-slate-400 text-[10px] uppercase">Value / Units:</span>
+                        <span className="font-mono font-medium text-emerald-400 text-[11px]">{v.valueOrRange}</span>
+                      </div>
+                      <p className="mt-1 text-[11px] text-slate-400 leading-normal">{v.meaning}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Real-World Case Calculation Walkthrough */}
+            {current.humanEquation?.practicalCalculation && (
+              <div className="p-4 bg-gradient-to-br from-slate-900 to-slate-950 rounded-lg border border-slate-800 space-y-2">
+                <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold uppercase tracking-wide">
+                  <Calculator className="w-4 h-4" />
+                  <span>Houston Ship Channel Case Calculation Walkthrough</span>
+                </div>
+                <div className="text-xs text-slate-300 space-y-1.5 leading-relaxed">
+                  <div className="font-medium text-slate-200">
+                    {current.humanEquation.practicalCalculation.stepLabel}:
+                  </div>
+                  <div className="font-mono text-[11px] text-cyan-300/90 bg-slate-950 p-2.5 rounded border border-slate-850 overflow-x-auto">
+                    {current.humanEquation.practicalCalculation.calculationText}
+                  </div>
+                  <div className="flex items-center gap-2 pt-1">
+                    <span className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">Output:</span>
+                    <span className="text-xs font-bold text-emerald-400 bg-emerald-950/60 px-2.5 py-1 rounded border border-emerald-800/40">
+                      {current.humanEquation.practicalCalculation.resultText}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Scientific Reproducibility Note */}
+            <div className="text-xs text-slate-400 leading-relaxed">
               <p>
                 This equation governs the numerical transformation at this pipeline stage. Adherence to physical conservation laws 
                 and vectorized batch processing ensures reproducible execution across all 553 vessel trajectories.

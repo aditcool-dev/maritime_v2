@@ -297,21 +297,21 @@ export default function SpillMap({
       const windMarker = L.marker([windStation.lat, windStation.lon], {
         icon: L.divIcon({
           className: 'custom-wind-station',
-          html: `<div class="flex items-center gap-1.5 px-2 py-1 bg-slate-900/90 text-sky-400 border border-sky-500/40 rounded shadow-lg text-xs font-semibold backdrop-blur whitespace-nowrap">
-            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1 1 11 8H2"/><path d="M12.6 19.4A2 2 0 1 0 14 16H2"/></svg>
-            <span>NOAA Wind: ${windStation.id}</span>
+          html: `<div class="flex items-center gap-1.5 px-2 py-0.5 bg-slate-950/90 text-sky-400 border border-sky-500/50 rounded-full shadow-md text-[11px] font-medium backdrop-blur hover:scale-105 transition-transform whitespace-nowrap">
+            <svg class="w-3 h-3 text-sky-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1 1 11 8H2"/><path d="M12.6 19.4A2 2 0 1 0 14 16H2"/></svg>
+            <span>Wind ${windStation.id}</span>
           </div>`,
-          iconSize: [140, 24],
-          iconAnchor: [70, 12],
+          iconSize: [108, 22],
+          iconAnchor: [54, 11],
         }),
       }).bindPopup(`
-        <div class="p-2 text-slate-800 text-xs">
-          <strong class="text-sm font-bold block mb-1 text-slate-950">${windStation.name}</strong>
-          <p class="text-slate-600 mb-1">NOAA CO-OPS Station #${windStation.id}</p>
-          <div class="bg-sky-50 p-1.5 rounded border border-sky-200 text-sky-900 space-y-0.5">
-            <div>Vector Mean Speed: <strong>${caseData.report.environment.wind.vector_mean_speed_ms} m/s</strong></div>
-            <div>Direction-Toward: <strong>${caseData.report.environment.wind.vector_mean_toward_deg}°</strong></div>
-            <div>Samples: ${caseData.report.environment.wind.n_samples}</div>
+        <div class="p-2.5 text-slate-100 text-xs min-w-[220px]">
+          <strong class="text-sm font-bold block mb-1 text-sky-300">${windStation.name}</strong>
+          <p class="text-slate-400 mb-2">NOAA CO-OPS Station #${windStation.id}</p>
+          <div class="bg-slate-900 p-2 rounded border border-sky-500/30 text-slate-300 space-y-1 font-mono text-[11px]">
+            <div class="flex justify-between"><span class="text-slate-400 font-sans">Mean Speed:</span><strong class="text-sky-300">${caseData.report.environment.wind.vector_mean_speed_ms} m/s</strong></div>
+            <div class="flex justify-between"><span class="text-slate-400 font-sans">Direction:</span><strong class="text-sky-300">${caseData.report.environment.wind.vector_mean_toward_deg}° toward</strong></div>
+            <div class="flex justify-between"><span class="text-slate-400 font-sans">Samples:</span><span>${caseData.report.environment.wind.n_samples}</span></div>
           </div>
         </div>
       `);
@@ -322,21 +322,21 @@ export default function SpillMap({
       const currentMarker = L.marker([currentStation.lat, currentStation.lon], {
         icon: L.divIcon({
           className: 'custom-current-station',
-          html: `<div class="flex items-center gap-1.5 px-2 py-1 bg-slate-900/90 text-teal-400 border border-teal-500/40 rounded shadow-lg text-xs font-semibold backdrop-blur whitespace-nowrap">
-            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/></svg>
-            <span>NOAA Current: ${currentStation.id}</span>
+          html: `<div class="flex items-center gap-1.5 px-2 py-0.5 bg-slate-950/90 text-teal-400 border border-teal-500/50 rounded-full shadow-md text-[11px] font-medium backdrop-blur hover:scale-105 transition-transform whitespace-nowrap">
+            <svg class="w-3 h-3 text-teal-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/></svg>
+            <span>Current ${currentStation.id}</span>
           </div>`,
-          iconSize: [150, 24],
-          iconAnchor: [75, 12],
+          iconSize: [116, 22],
+          iconAnchor: [58, 11],
         }),
       }).bindPopup(`
-        <div class="p-2 text-slate-800 text-xs">
-          <strong class="text-sm font-bold block mb-1 text-slate-950">${currentStation.name}</strong>
-          <p class="text-slate-600 mb-1">NOAA CO-OPS Station #${currentStation.id} (Bin ${currentStation.bin}, Depth ${currentStation.bin_depth_m}m)</p>
-          <div class="bg-teal-50 p-1.5 rounded border border-teal-200 text-teal-900 space-y-0.5">
-            <div>Vector Mean Speed: <strong>${caseData.report.environment.current.vector_mean_speed_ms} m/s</strong></div>
-            <div>Direction-Toward: <strong>${caseData.report.environment.current.vector_mean_toward_deg}°</strong></div>
-            <div>Samples: ${caseData.report.environment.current.n_samples}</div>
+        <div class="p-2.5 text-slate-100 text-xs min-w-[220px]">
+          <strong class="text-sm font-bold block mb-1 text-teal-300">${currentStation.name}</strong>
+          <p class="text-slate-400 mb-2">NOAA CO-OPS Station #${currentStation.id} (Bin ${currentStation.bin}, ${currentStation.bin_depth_m}m depth)</p>
+          <div class="bg-slate-900 p-2 rounded border border-teal-500/30 text-slate-300 space-y-1 font-mono text-[11px]">
+            <div class="flex justify-between"><span class="text-slate-400 font-sans">Mean Speed:</span><strong class="text-teal-300">${caseData.report.environment.current.vector_mean_speed_ms} m/s</strong></div>
+            <div class="flex justify-between"><span class="text-slate-400 font-sans">Direction:</span><strong class="text-teal-300">${caseData.report.environment.current.vector_mean_toward_deg}° toward</strong></div>
+            <div class="flex justify-between"><span class="text-slate-400 font-sans">Samples:</span><span>${caseData.report.environment.current.n_samples}</span></div>
           </div>
         </div>
       `);
@@ -350,26 +350,48 @@ export default function SpillMap({
       const gtMarker = L.marker([gt.lat, gt.lon], {
         icon: L.divIcon({
           className: 'custom-gt-marker',
-          html: `<div class="flex items-center gap-1.5 px-2.5 py-1 bg-amber-950/95 text-amber-300 border-2 border-amber-400 rounded-md shadow-xl text-xs font-bold backdrop-blur animate-pulse">
-            <span class="w-2 h-2 rounded-full bg-amber-400"></span>
-            <span>True Release: 20:20 UTC</span>
+          html: `<div class="relative group cursor-pointer flex items-center gap-1.5 px-2.5 py-0.5 bg-slate-950/90 hover:bg-slate-900 text-amber-300 border border-amber-400/90 rounded-full shadow-lg backdrop-blur-md transition-all duration-150 hover:scale-105 hover:border-amber-300">
+            <span class="relative flex h-2 w-2">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-60"></span>
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]"></span>
+            </span>
+            <span class="text-[11px] font-bold tracking-tight whitespace-nowrap">Incident Origin • 20:20</span>
           </div>`,
-          iconSize: [165, 26],
-          iconAnchor: [82, 13],
+          iconSize: [136, 24],
+          iconAnchor: [68, 12],
         }),
       }).bindPopup(`
-        <div class="p-2.5 text-slate-800 text-xs">
-          <div class="flex items-center gap-1 text-amber-700 font-bold text-sm mb-1">
-            <span>Known Incident Release Origin</span>
-          </div>
-          <p class="text-slate-600 mb-1 leading-relaxed">${gt.note}</p>
-          <div class="bg-amber-50 border border-amber-200 rounded p-1.5 space-y-1 text-amber-900">
-            <div>Time: <strong>${gt.time_utc}</strong> (3.0h before observation)</div>
-            <div>Coordinates: <strong>${gt.lat.toFixed(5)}°N, ${gt.lon.toFixed(5)}°W</strong></div>
-            <div>Duration: <strong>${gt.release_duration_min} min</strong></div>
-            <div class="border-t border-amber-200 pt-1 mt-1 text-[11px] text-amber-800">
-              * Quarantined Ground Truth (VOYAGER & ROSE BALSAM collision point)
+        <div class="p-2.5 text-slate-100 text-xs min-w-[240px]">
+          <div class="flex items-center justify-between border-b border-amber-500/30 pb-1.5 mb-2">
+            <div class="flex items-center gap-1.5 font-bold text-amber-300 text-sm">
+              <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+              <span>Known Incident Release</span>
             </div>
+            <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-950/80 text-amber-300 border border-amber-500/40 font-semibold">
+              Ground Truth
+            </span>
+          </div>
+          <p class="text-slate-300 mb-2 leading-relaxed text-[11px]">${gt.note}</p>
+          <div class="bg-slate-900 border border-slate-800 rounded-md p-2 space-y-1 text-slate-300 font-mono text-[11px]">
+            <div class="flex justify-between">
+              <span class="text-slate-400 font-sans">Release Time:</span>
+              <strong class="text-amber-300">${gt.time_utc} UTC</strong>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-400 font-sans">Slick Age:</span>
+              <strong class="text-slate-200">3.0 h prior</strong>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-400 font-sans">Coordinates:</span>
+              <strong class="text-slate-200">${gt.lat.toFixed(5)}°N, ${gt.lon.toFixed(5)}°W</strong>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-400 font-sans">Duration:</span>
+              <strong class="text-slate-200">${gt.release_duration_min} min</strong>
+            </div>
+          </div>
+          <div class="mt-2 text-[10px] text-amber-400/90 bg-amber-950/40 p-1.5 rounded border border-amber-500/30">
+            Quarantined evaluation benchmark (VOYAGER & ROSE BALSAM collision point). Isolated from candidate scoring.
           </div>
         </div>
       `);
@@ -477,9 +499,9 @@ export default function SpillMap({
               fillOpacity: 0.15,
               dashArray: '4, 4',
             }).bindTooltip(`Uncertainty: ±${pt.uncertainty_radius_m.toFixed(0)}m (Age ${pt.age_h}h)`, {
-              permanent: true,
-              direction: 'center',
-              className: 'uncertainty-tooltip bg-amber-950/80 text-amber-300 px-1.5 py-0.5 rounded border border-amber-500/50 text-[11px]',
+              permanent: false,
+              direction: 'top',
+              className: 'uncertainty-tooltip bg-slate-950/90 text-amber-300 px-2 py-1 rounded-md border border-amber-500/50 text-[11px] shadow-lg backdrop-blur font-mono',
             });
             layersRef.current.uncertaintyLayer!.addLayer(circle);
           }
@@ -492,8 +514,8 @@ export default function SpillMap({
       layersRef.current.vesselLayer.clearLayers();
 
       if (showVessels && caseData.candidates) {
-        // Show top 25 candidates + selected vessel
-        const vesselsToDisplay = caseData.candidates.slice(0, 25);
+        // Show top 10 priority candidates + selected vessel for a clean, uncluttered visual
+        const vesselsToDisplay = caseData.candidates.slice(0, 10);
         if (selectedVessel && !vesselsToDisplay.some((v) => v.MMSI === selectedVessel.MMSI)) {
           vesselsToDisplay.push(selectedVessel);
         }
@@ -505,27 +527,26 @@ export default function SpillMap({
           const isTopCandidate = vessel.rank === 1;
           const isCollisionGroundTruth = vessel.MMSI === '356144000' || vessel.MMSI === '366996020';
 
-          let pinColor = '#94a3b8'; // default slate
-          let borderColor = '#475569';
-          let textColor = '#ffffff';
+          let pinColor = '#475569'; // default slate
+          let borderColor = '#64748b';
 
           if (isTopCandidate) {
-            pinColor = '#3b82f6'; // Blue for THOR (#1)
+            pinColor = '#2563eb'; // Blue for THOR (#1)
             borderColor = '#60a5fa';
           } else if (isCollisionGroundTruth) {
-            pinColor = '#f59e0b'; // Amber for ROSE BALSAM & VOYAGER
+            pinColor = '#d97706'; // Amber for ROSE BALSAM & VOYAGER
             borderColor = '#fbbf24';
           } else if (vessel.rank <= 5) {
-            pinColor = '#10b981'; // Emerald for top 5
+            pinColor = '#059669'; // Emerald for top 5
             borderColor = '#34d399';
           }
 
           const markerHtml = `
-            <div class="relative group cursor-pointer transition-transform ${isSelected ? 'scale-125 z-50' : 'hover:scale-110 z-20'}">
-              <div class="flex items-center justify-center w-7 h-7 rounded-full shadow-lg border-2" style="background-color: ${pinColor}; border-color: ${borderColor};">
-                <span class="text-[11px] font-bold text-white leading-none">#${vessel.rank}</span>
+            <div class="relative group cursor-pointer transition-transform duration-150 ${isSelected ? 'scale-125 z-50' : 'hover:scale-115 z-20'}">
+              <div class="flex items-center justify-center w-6 h-6 rounded-full shadow-md border" style="background-color: ${pinColor}; border-color: ${borderColor};">
+                <span class="text-[10px] font-bold text-white leading-none">#${vessel.rank}</span>
               </div>
-              ${isSelected ? '<div class="absolute -inset-1 rounded-full border-2 border-cyan-400 animate-ping opacity-75"></div>' : ''}
+              ${isSelected ? '<div class="absolute -inset-1 rounded-full border-2 border-cyan-400 animate-ping opacity-75 pointer-events-none"></div>' : ''}
             </div>
           `;
 
@@ -533,8 +554,8 @@ export default function SpillMap({
             icon: L.divIcon({
               className: 'custom-vessel-marker',
               html: markerHtml,
-              iconSize: [28, 28],
-              iconAnchor: [14, 14],
+              iconSize: [24, 24],
+              iconAnchor: [12, 12],
             }),
             zIndexOffset: isSelected ? 1000 : isTopCandidate || isCollisionGroundTruth ? 500 : 100,
           });
@@ -544,44 +565,44 @@ export default function SpillMap({
           });
 
           const popupContent = `
-            <div class="p-2 text-slate-900 text-xs min-w-[210px]">
-              <div class="flex items-center justify-between border-b pb-1 mb-1.5">
-                <span class="font-bold text-sm text-slate-950">${vessel.name || '(unnamed)'}</span>
-                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold text-white" style="background-color: ${pinColor}">
+            <div class="p-2.5 text-slate-100 text-xs min-w-[230px] bg-slate-950 rounded-lg">
+              <div class="flex items-center justify-between border-b border-slate-800 pb-1.5 mb-2">
+                <span class="font-bold text-sm text-slate-100">${vessel.name || '(unnamed)'}</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold text-white shadow-xs" style="background-color: ${pinColor}">
                   Rank #${vessel.rank}
                 </span>
               </div>
-              <div class="text-slate-600 mb-1 space-y-0.5">
-                <div>Type: <strong>${vessel.type_label}</strong> (${vessel.length_m ? vessel.length_m + 'm' : 'N/A'})</div>
-                <div>MMSI: <code class="bg-slate-100 px-1 py-0.5 rounded text-[11px]">${vessel.MMSI}</code></div>
-                ${vessel.imo ? `<div>IMO: <code>${vessel.imo}</code></div>` : ''}
+              <div class="text-slate-400 mb-2 space-y-0.5 text-[11px]">
+                <div>Type: <strong class="text-slate-200">${vessel.type_label}</strong> (${vessel.length_m ? vessel.length_m + 'm' : 'N/A'})</div>
+                <div>MMSI: <code class="bg-slate-900 text-cyan-300 px-1 py-0.5 rounded text-[11px] font-mono">${vessel.MMSI}</code></div>
+                ${vessel.imo ? `<div>IMO: <code class="text-slate-300 font-mono">${vessel.imo}</code></div>` : ''}
               </div>
-              <div class="bg-slate-50 p-1.5 rounded border border-slate-200 mb-1.5 space-y-1">
+              <div class="bg-slate-900 p-2 rounded border border-slate-800 mb-2 space-y-1 font-mono text-[11px]">
                 <div class="flex justify-between">
-                  <span>Composite Score:</span>
-                  <strong class="text-indigo-600">${vessel.composite_score.toFixed(4)}</strong>
+                  <span class="text-slate-400 font-sans">Composite Score:</span>
+                  <strong class="text-cyan-400">${vessel.composite_score.toFixed(4)}</strong>
                 </div>
                 <div class="flex justify-between">
-                  <span>Matched Slick Age:</span>
-                  <strong>${vessel.matched_age_h.toFixed(1)} h</strong>
+                  <span class="text-slate-400 font-sans">Matched Slick Age:</span>
+                  <strong class="text-amber-300">${vessel.matched_age_h.toFixed(1)} h</strong>
                 </div>
                 <div class="flex justify-between">
-                  <span>Dist. at Origin:</span>
-                  <strong>${vessel.dist_at_origin_time_m.toFixed(0)} m</strong>
+                  <span class="text-slate-400 font-sans">Dist. at Origin:</span>
+                  <strong class="text-slate-200">${vessel.dist_at_origin_time_m.toFixed(0)} m</strong>
                 </div>
                 <div class="flex justify-between">
-                  <span>Speed Over Ground:</span>
-                  <strong>${vessel.sog_at_approach_kn ? vessel.sog_at_approach_kn.toFixed(1) + ' kn' : '0.0 kn'}</strong>
+                  <span class="text-slate-400 font-sans">Speed Over Ground:</span>
+                  <strong class="text-slate-200">${vessel.sog_at_approach_kn ? vessel.sog_at_approach_kn.toFixed(1) + ' kn' : '0.0 kn'}</strong>
                 </div>
               </div>
               ${
                 isCollisionGroundTruth
-                  ? `<div class="bg-amber-100 text-amber-900 text-[10px] p-1 rounded border border-amber-300 font-semibold">
-                      * Known Houston Ship Channel Collision Participant
+                  ? `<div class="bg-amber-950/60 text-amber-300 text-[10px] p-1.5 rounded border border-amber-500/40 font-semibold mb-2">
+                      * Known Collision Vessel (Ground Truth)
                     </div>`
                   : ''
               }
-              <button id="popup-select-btn-${vessel.MMSI}" class="mt-2 w-full py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs font-semibold text-center transition">
+              <button id="popup-select-btn-${vessel.MMSI}" class="w-full py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded text-xs font-semibold text-center transition cursor-pointer active:scale-98">
                 Inspect Candidate Telemetry
               </button>
             </div>
